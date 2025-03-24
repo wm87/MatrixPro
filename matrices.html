@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <title>MatrixPro Rechner</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f7fa;
+            margin: 0;
+            padding-top: 80px;
+        }
+
+        header {
+            background: #0066cc;
+            color: white;
+            padding: 10px 20px;
+            position: fixed;
+            top: 0;
+            width: 100%;
+            z-index: 1000;
+            text-align: center;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+
+        section {
+            padding: 0 20px;
+            max-width: 1200px;
+            margin: auto;
+        }
+
+        .box {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        h2,
+        .matrix-controls {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+        }
+
+        button {
+            background: #0066cc;
+            color: white;
+            padding: 10px 18px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 200px;
+        }
+
+        button:hover {
+            background: #004999;
+        }
+
+        table.matrix {
+            border-collapse: collapse;
+            background: #fff;
+            margin: auto;
+        }
+
+        table.matrix td {
+            border: 1px solid #ccc;
+            padding: 0;
+        }
+
+        table.matrix input {
+            width: 70px;
+            height: 50px;
+            text-align: center;
+            font-size: 16px;
+            border: none;
+        }
+
+        table.matrix input:focus {
+            background: #e0f7fa;
+            outline: none;
+        }
+
+        .operations {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            justify-items: center;
+            margin: 20px auto;
+            max-width: 1000px;
+        }
+
+        #result,
+        #history {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
+            margin-top: 20px;
+        }
+
+        #history {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        table.result-table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        table.result-table th,
+        table.result-table td {
+            border: 1px solid #ccc;
+            padding: 8px;
+            text-align: center;
+        }
+
+        #history .latest {
+            background-color: #e0f7fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+
+        #history .step {
+            margin-bottom: 20px;
+        }
+
+        #clearHistory {
+            background: #cc0000;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            cursor: pointer;
+        }
+
+        #clearHistory:hover {
+            background: #990000;
+        }
+
+        @media (max-width: 768px) {
+
+            .matrix-controls,
+            .operations {
+                flex-direction: column;
+            }
+
+            button {
+                width: 100%;
+                font-size: 16px;
+            }
+
+            table.matrix input {
+                width: 50px;
+                height: 40px;
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <h1>MatrixPro</h1>
+    </header>
+
+    <section>
+        <div class="box">
+            <h2>Import / Export</h2>
+            <div class="matrix-controls">
+                <label>Import Matrix A: <input type="file" id="uploadA"></label>
+                <label>Import Matrix B: <input type="file" id="uploadB"></label>
+            </div>
+            <div class="matrix-controls">
+                <button id="downloadA">Export Matrix A</button>
+                <button id="downloadB">Export Matrix B</button>
+            </div>
+        </div>
+
+        <div class="box">
+            <h2>Matrix A</h2>
+            <div class="matrix-controls">
+                Rows: <input type="number" id="rowsA" value="2" min="1" max="20">
+                Columns: <input type="number" id="colsA" value="2" min="1" max="20">
+                <button id="generateA">Generate A</button>
+            </div>
+            <div id="matrixA"></div>
+        </div>
+
+        <div class="box">
+            <h2>Matrix B</h2>
+            <div class="matrix-controls">
+                Rows: <input type="number" id="rowsB" value="2" min="1" max="20">
+                Columns: <input type="number" id="colsB" value="2" min="1" max="20">
+                <button id="generateB">Generate B</button>
+            </div>
+            <div id="matrixB"></div>
+        </div>
+
+        <div class="box">
+            <h2>Operations</h2>
+            <div class="operations">
+                <button id="add">A + B</button>
+                <button id="subtract">A - B</button>
+                <button id="multiply">A × B</button>
+                <button id="transposeA">Transpose A</button>
+                <button id="transposeB">Transpose B</button>
+                <button id="inverseA">Inverse A</button>
+                <button id="inverseB">Inverse B</button>
+                <button id="detA">Determinant A</button>
+                <button id="detB">Determinant B</button>
+            </div>
+        </div>
+
+        <div class="box">
+            <h2>Result</h2>
+            <div id="result"></div>
+        </div>
+
+        <div class="box">
+            <h2>History</h2>
+            <button id="clearHistory">Delete History</button>
+            <div id="history"></div>
+        </div>
+
+        <footer style="margin-top:40px; text-align:center; color:#555;">© 2025 MatrixPro</footer>
+    </section>
+
+    <script>
+        let historyStack = [];
+
+        function createMatrix(rows, cols, id) {
+            let html = '<table class="matrix">';
+            for (let i = 0; i < rows; i++) {
+                html += '<tr>';
+                for (let j = 0; j < cols; j++) {
+                    html += '<td><input type="number" value="0"></td>';
+                }
+                html += '</tr>';
+            }
+            html += '</table>';
+            $(id).html(html);
+        }
+
+        function readMatrix(id) {
+            let matrix = [];
+            $(id + " table tr").each(function () {
+                let row = [];
+                $(this).find("input").each(function () {
+                    row.push(parseFloat($(this).val()) || 0);
+                });
+                matrix.push(row);
+            });
+            return matrix;
+        }
+
+        function displayMatrix(matrix) {
+            if (typeof matrix === 'string' || typeof matrix === 'number') return matrix;
+            let html = '<table class="result-table">';
+            matrix.forEach(row => {
+                html += '<tr>' + row.map(val => `<td>${val}</td>`).join('') + '</tr>';
+            });
+            html += '</table>';
+            return html;
+        }
+
+        function displayResult(operation, result) {
+            const stepHtml = `<strong>${operation}</strong>${displayMatrix(result)}`;
+            $('#result').html(stepHtml);
+            historyStack.unshift(stepHtml);
+            updateHistory();
+        }
+
+        function updateHistory() {
+            let historyHtml = historyStack.map((step, i) => `
+          <div class="${i === 0 ? 'latest' : 'step'}">
+            ${step}
+          </div>
+          ${i < historyStack.length - 1 ? '<hr>' : ''}
+        `).join("");
+            $('#history').html(historyHtml);
+        }
+
+        function addMatrices(a, b) {
+            if (a.length !== b.length || a[0].length !== b[0].length) return 'Dimensionen passen nicht';
+            return a.map((row, i) => row.map((val, j) => val + b[i][j]));
+        }
+
+        function subtractMatrices(a, b) {
+            if (a.length !== b.length || a[0].length !== b[0].length) return 'Dimensionen passen nicht';
+            return a.map((row, i) => row.map((val, j) => val - b[i][j]));
+        }
+
+        function multiplyMatrices(a, b) {
+            if (a[0].length !== b.length) return 'Dimensionen passen nicht';
+            let result = [];
+            for (let i = 0; i < a.length; i++) {
+                result[i] = [];
+                for (let j = 0; j < b[0].length; j++) {
+                    let sum = 0;
+                    for (let k = 0; k < b.length; k++) {
+                        sum += a[i][k] * b[k][j];
+                    }
+                    result[i][j] = sum;
+                }
+            }
+            return result;
+        }
+
+        function transposeMatrix(m) {
+            return m[0].map((_, i) => m.map(row => row[i]));
+        }
+
+        function inverseMatrix(mat) {
+            let n = mat.length;
+            if (n !== mat[0].length) return 'Nicht quadratisch';
+            let I = mat.map((row, i) => row.map((_, j) => (i === j ? 1 : 0)));
+            mat = JSON.parse(JSON.stringify(mat));
+
+            for (let i = 0; i < n; i++) {
+                let factor = mat[i][i];
+                if (factor === 0) return 'Nicht invertierbar';
+                for (let j = 0; j < n; j++) {
+                    mat[i][j] /= factor;
+                    I[i][j] /= factor;
+                }
+                for (let k = 0; k < n; k++) {
+                    if (k !== i) {
+                        let factor2 = mat[k][i];
+                        for (let j = 0; j < n; j++) {
+                            mat[k][j] -= factor2 * mat[i][j];
+                            I[k][j] -= factor2 * I[i][j];
+                        }
+                    }
+                }
+            }
+            return I;
+        }
+
+        function determinant(m) {
+            const n = m.length;
+            if (n !== m[0].length) return 'Nicht quadratisch';
+            if (n === 1) return m[0][0];
+            if (n === 2) return m[0][0] * m[1][1] - m[0][1] * m[1][0];
+            let det = 0;
+            for (let i = 0; i < n; i++) {
+                const minor = m.slice(1).map(row => row.filter((_, idx) => idx !== i));
+                det += (i % 2 === 0 ? 1 : -1) * m[0][i] * determinant(minor);
+            }
+            return det;
+        }
+        
+        $('#generateA').click(() => createMatrix($('#rowsA').val(), $('#colsA').val(), '#matrixA'));
+        $('#generateB').click(() => createMatrix($('#rowsB').val(), $('#colsB').val(), '#matrixB'));
+
+        $('#add').click(() => displayResult('Addition A + B', addMatrices(readMatrix('#matrixA'), readMatrix('#matrixB'))));
+        $('#subtract').click(() => displayResult('Subtraction A - B', subtractMatrices(readMatrix('#matrixA'), readMatrix('#matrixB'))));
+        $('#multiply').click(() => displayResult('Multiplication A × B', multiplyMatrices(readMatrix('#matrixA'), readMatrix('#matrixB'))));
+        $('#transposeA').click(() => displayResult('Transpose A', transposeMatrix(readMatrix('#matrixA'))));
+        $('#transposeB').click(() => displayResult('Transpose B', transposeMatrix(readMatrix('#matrixB'))));
+        $('#inverseA').click(() => displayResult('Inverse A', inverseMatrix(readMatrix('#matrixA'))));
+        $('#inverseB').click(() => displayResult('Inverse B', inverseMatrix(readMatrix('#matrixB'))));
+
+        $('#detA').click(() => displayResult('Determinant A', determinant(readMatrix('#matrixA'))));
+        $('#detB').click(() => displayResult('Determinant B', determinant(readMatrix('#matrixB'))));
+
+        $('#downloadA').click(() => downloadMatrix(readMatrix('#matrixA'), 'matrixA.json'));
+        $('#downloadB').click(() => downloadMatrix(readMatrix('#matrixB'), 'matrixB.json'));
+
+        function downloadMatrix(matrix, filename) {
+            let data = new Blob([JSON.stringify(matrix)], { type: 'application/json' });
+            let a = document.createElement('a');
+            a.href = URL.createObjectURL(data);
+            a.download = filename;
+            a.click();
+        }
+
+        $('#uploadA').change(function () { uploadMatrix(this, '#matrixA'); });
+        $('#uploadB').change(function () { uploadMatrix(this, '#matrixB'); });
+
+        function uploadMatrix(input, id) {
+            let reader = new FileReader();
+            reader.onload = function () {
+                let data = JSON.parse(reader.result);
+                let html = '<table class="matrix">';
+                data.forEach(row => {
+                    html += '<tr>';
+                    row.forEach(val => html += `<td><input type="number" value="${val}"></td>`);
+                    html += '</tr>';
+                });
+                html += '</table>';
+                $(id).html(html);
+            };
+            reader.readAsText(input.files[0]);
+        }
+
+        $('#clearHistory').click(() => {
+            historyStack = [];
+            updateHistory();
+        });
+    </script>
+
+</body>
+
+</html>
